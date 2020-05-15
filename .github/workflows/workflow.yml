@@ -1,0 +1,54 @@
+name: build-plugin
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  package:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java-version: [8, 11]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java-version }}
+      - run: mvnw package
+      - run: |
+          mkdir -p artifacts/{libs,plugin}
+          cp target/*.jar artifacts/libs/
+          cp target/*.hpi artifacts/plugin/
+      - name: upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: java-${{ matrix.java-version }}
+          path: artifacts/
+
+  package-java7:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 7
+      - run: mvnw -Dhttps.protocols=TLSv1.2 package
+      - run: |
+          mkdir -p artifacts/{libs,plugin}
+          cp target/*.jar artifacts/libs/
+          cp target/*.hpi artifacts/plugin/
+      - name: upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: java-7
+          path: artifacts/
