@@ -21,7 +21,9 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java-version }}
-      - run: mvnw package
+      - run: |
+          chmod +x ./mvnw
+          ./mvnw package
       - run: |
           mkdir -p artifacts/{libs,plugin}
           cp target/*.jar artifacts/libs/
@@ -42,7 +44,9 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 7
-      - run: mvnw -Dhttps.protocols=TLSv1.2 package
+      - run: |
+          chmod +x ./mvnw
+          ./mvnw -Dhttps.protocols=TLSv1.2 package
       - run: |
           mkdir -p artifacts/{libs,plugin}
           cp target/*.jar artifacts/libs/
