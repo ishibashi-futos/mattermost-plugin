@@ -7,6 +7,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -14,17 +15,24 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import sun.security.ssl.SSLSocketFactoryImpl;
 
+import javax.net.ssl.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -132,7 +140,7 @@ public class StandardMattermostService implements MattermostService
 				url = new URL(this.endpoint);
 				HttpHost httpHost = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
 				HttpClientBuilder clientBuilder = HttpClients.custom();
-				clientBuilder.setSSLContext(SSLContexts.createDefault());
+				clientBuilder.setSSLContext(getSelfSignedSSLContext());
 				RequestConfig.Builder reqconfigconbuilder = RequestConfig.custom();
 				reqconfigconbuilder.setConnectTimeout(10000);
 				reqconfigconbuilder.setSocketTimeout(10000);
@@ -264,5 +272,21 @@ public class StandardMattermostService implements MattermostService
 	void setEndpoint(String endpoint)
 	{
 		this.endpoint = endpoint;
+	}
+
+	/**
+	 * 事故署名証明書を許可するSSLContextを返却する.
+	 *
+	 * @return SSLContext
+	 * @throws IOException SSLContextの返却に失敗した場合.
+	 */
+	private static SSLContext getSelfSignedSSLContext() throws IOException {
+		try {
+			SSLContextBuilder builder = new SSLContextBuilder();
+			builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+			return builder.build();
+		} catch (Exception e) {
+			throw new IOException(e);
+		}
 	}
 }
